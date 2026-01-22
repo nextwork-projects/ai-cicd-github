@@ -2,5 +2,4 @@
 
 # Development/testing dependencies
 pytest>=7.0.0
-ruff>=0.1.0
 build>=1.0.0

@@ -63,7 +63,6 @@ Create `.github/workflows/ci.yml` that:
 - Checks out code
 - Sets up Python 3.11
 - Installs dependencies
-- Runs linter (`ruff check .`)
 - Runs tests (`pytest -v`)
 
 ### Mission 4: Break It, Fix It
@@ -80,7 +79,6 @@ Add steps to build and upload a dist/ artifact!
 
 ```bash
 pytest -v        # Run tests
-ruff check .     # Run linter
 python -m build  # Build package
 ```
 
