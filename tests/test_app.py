@@ -13,7 +13,7 @@ class TestMath:
         assert add(-1, -1) == -2
 
     def test_multiple(self):
-        assert multiple(9,9) == 18
+        assert multiple(9,9) == 81
 
 
 class TestStrings:
