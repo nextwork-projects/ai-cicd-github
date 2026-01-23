@@ -16,7 +16,7 @@ class TestMath:
         assert multiply(5, 5) == 25
     
     def test_multiple_zero(self):
-        assert multiply(0, 5) == 5
+        assert multiply(0, 5) == 0
 
     def test_multiple_two_negative(self):
         assert multiply(-2,-2) == 4
