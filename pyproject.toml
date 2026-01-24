@@ -2,13 +2,16 @@
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+py-modules = ["app"]
+
 [project]
 name = "ci-starter"
 version = "0.1.0"
 description = "A starter project for learning GitHub Actions CI/CD"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "Your Name", email = "you@example.com"}
 ]
