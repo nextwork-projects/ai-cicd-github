@@ -16,7 +16,7 @@ def review_code(diff_text):
     )
 
     # Return just the text from the response
-    return response.text
+    return response.text 
 
 # Only run this code when the script is executed directly
 if __name__ == "__main__":
