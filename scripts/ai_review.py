@@ -8,7 +8,7 @@ def review_code(diff_text):
 
     # Write a multi-line f-string prompt that includes {diff_text}
     # Tell Gemini to act as a code reviewer and focus on security, bugs, performance
-    prompt = f"""Act as a CONCISE code reviewer and focus on security, bugs and performance"""
+    prompt = f"""Act as a code reviewer and focus on security, bugs and performance"""
 
     # Send the prompt to the model and get a response
     response = client.models.generate_content(
