@@ -4,3 +4,4 @@ google-genai>=1.0.0
 # Development/testing dependencies
 pytest>=7.0.0
 build>=1.0.0
+pytest-cov>=4.0.0
