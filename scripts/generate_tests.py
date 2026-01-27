@@ -63,7 +63,7 @@ Return ONLY the Python test code, no explanations.
 
     # Send the prompt to the model and get a response
     response = client.models.generate_content(
-        model='gemini-2.5-pro',
+        model='gemini-2.5-flash',
         contents=prompt
     )
 
