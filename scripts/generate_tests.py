@@ -1,7 +1,9 @@
 import ast
 import os
 import sys
+import time
 from google import genai
+from google.genai import errors
 
 # Define a function that takes a file path and extracts function info
 def extract_functions(file_path):
@@ -34,7 +36,7 @@ def extract_functions(file_path):
     return functions
 
 # Define a function that generates tests for a given function's info
-def generate_function_tests(func_info):
+def generate_function_tests(func_info, max_retries=5, initial_delay=60):
     """Use Gemini to generate pytest tests for a function."""
 
     # Create a Gemini client using your API key from environment variables
@@ -61,14 +63,27 @@ Requirements:
 Return ONLY the Python test code, no explanations.
 """
 
-    # Send the prompt to the model and get a response
-    response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=prompt
-    )
-
-    # Return just the text from the response
-    return response.text
+    # Retry loop with exponential backoff for rate limits
+    delay = initial_delay
+    for attempt in range(max_retries):
+        try:
+            # Send the prompt to the model and get a response
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt
+            )
+            # Return just the text from the response
+            return response.text
+        except errors.ClientError as e:
+            if '429' in str(e) or 'RESOURCE_EXHAUSTED' in str(e):
+                if attempt < max_retries - 1:
+                    print(f"    Rate limited. Waiting {delay}s before retry...")
+                    time.sleep(delay)
+                    delay *= 2  # Exponential backoff
+                else:
+                    raise
+            else:
+                raise
 
 def main():
     """Main function to generate tests for changed files."""
