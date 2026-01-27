@@ -26,7 +26,7 @@ def factorial(n):
     # Handle invalid input - factorial isn't defined for negatives
     if n < 0:
         raise ValueError(
-            "Factorial not defined for negative numbers"
+            "Factorial not defined for negative numbers" 
         )
 
     # Base case - stop recursion when n is 0 or 1
