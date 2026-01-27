@@ -1,7 +1,9 @@
 import ast
 import os
 import sys
+import time
 from google import genai
+from google.genai import errors
 
 # Define a function that takes a file path and extracts function info
 def extract_functions(file_path):
@@ -33,42 +35,63 @@ def extract_functions(file_path):
 
     return functions
 
-# Define a function that generates tests for a given function's info
-def generate_function_tests(func_info):
-    """Use Gemini to generate pytest tests for a function."""
+# Define a function that generates tests for multiple functions in one API call
+def generate_all_tests(all_functions, max_retries=5, initial_delay=60):
+    """Use Gemini to generate pytest tests for all functions in one call."""
 
     # Create a Gemini client using your API key from environment variables
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-    # Write a multi-line prompt that includes the function details
-    prompt = f"""Generate pytest tests for this Python function.
-
+    # Build a combined prompt with all functions
+    functions_text = ""
+    for file_path, func_info in all_functions:
+        functions_text += f"""
+--- Function from {file_path} ---
 Function name: {func_info['name']}
 Arguments: {', '.join(func_info['args'])}
 Docstring: {func_info['docstring']}
 
 Source code:
-
 {func_info['source']}
 
+"""
+
+    prompt = f"""Generate pytest tests for these Python functions.
+
+{functions_text}
+
 Requirements:
-1. Generate 3-5 meaningful test cases
+1. Generate 3-5 meaningful test cases per function
 2. Include edge cases (empty inputs, None values, etc.)
 3. Use descriptive test function names
 4. Include assertions that actually test behavior
 5. Do NOT generate placeholder tests like `assert True`
+6. Add necessary imports at the top (like 'from app import add, multiply' etc.)
 
-Return ONLY the Python test code, no explanations.
+Return ONLY the Python test code, no explanations or markdown code blocks.
 """
 
-    # Send the prompt to the model and get a response
-    response = client.models.generate_content(
-        model='gemini-2.5-pro',
-        contents=prompt
-    )
-
-    # Return just the text from the response
-    return response.text
+    # Retry loop with exponential backoff for rate limits
+    delay = initial_delay
+    for attempt in range(max_retries):
+        try:
+            # Send the prompt to the model and get a response
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt
+            )
+            # Return just the text from the response
+            return response.text
+        except errors.ClientError as e:
+            if '429' in str(e) or 'RESOURCE_EXHAUSTED' in str(e):
+                if attempt < max_retries - 1:
+                    print(f"  Rate limited. Waiting {delay}s before retry...")
+                    time.sleep(delay)
+                    delay *= 2  # Exponential backoff
+                else:
+                    raise
+            else:
+                raise
 
 def main():
     """Main function to generate tests for changed files."""
@@ -80,14 +103,15 @@ def main():
         print("No Python files provided for test generation")
         return
 
-    all_tests = []
+    # Collect all functions first
+    all_functions = []
 
     for file_path in changed_files:
         # Skip non-Python files
         if not file_path.endswith('.py'):
             continue
         # Skip test files
-        if file_path.startswith('/tests'):
+        if file_path.startswith('tests/'):
             continue
 
         print(f"Analyzing: {file_path}")
@@ -98,18 +122,20 @@ def main():
             if func['name'].startswith('_'):
                 continue
 
-            print(f"  Generating tests for: {func['name']}")
-            tests = generate_function_tests(func)
-            all_tests.append(f"# Tests for {func['name']} from {file_path}\n{tests}")
+            print(f"  Found function: {func['name']}")
+            all_functions.append((file_path, func))
 
-    if all_tests:
+    if all_functions:
+        # Generate tests for all functions in one API call
+        print(f"\nGenerating tests for {len(all_functions)} functions...")
+        tests = generate_all_tests(all_functions)
+
         # Create tests directory if it doesn't exist
         os.makedirs('tests', exist_ok=True)
         test_file = 'tests/test_generated.py'
 
         with open(test_file, 'w') as f:
-            f.write("import pytest\n\n")
-            f.write("\n\n".join(all_tests))
+            f.write(tests)
 
         print(f"Generated tests written to: {test_file}")
     else:
