@@ -119,7 +119,7 @@ def main():
             print(f"  Skipping due to read error")
             continue
 
-        time.sleep(12)
+        time.sleep(35)
         result = analyze_code(content, file_path)
         
 
