@@ -40,7 +40,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Check if report has findings (not just "No dead code detected")
-          if grep -q "Found .* potential issues" stale_code_report.md; then
+          if grep -q "issues found" stale_code_report.md; then
             gh issue create \
               --title "Weekly Stale Code Report - $(date +%Y-%m-%d)" \
               --body-file stale_code_report.md
