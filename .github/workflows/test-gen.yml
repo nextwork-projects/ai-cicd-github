@@ -31,6 +31,24 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Check coverage threshold
+        id: coverage-check
+        continue-on-error: true
+        run: python scripts/check_coverage.py 80
+
+      - name: Skip message (coverage sufficient)
+        if: steps.coverage-check.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '**Coverage check passed!** No additional tests needed.'
+            })
+
+
       - name: Get changed Python files
         id: changed-files
         run: |
