@@ -31,20 +31,40 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Check coverage threshold
+        id: coverage-check
+        continue-on-error: true
+        run: python scripts/check_coverage.py 80
+
+      - name: Skip message (coverage sufficient)
+        if: steps.coverage-check.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '**Coverage check passed!** No additional tests needed.'
+            })
+
+
       - name: Get changed Python files
+        if: steps.coverage-check.outcome == 'failure'
         id: changed-files
         run: |
           FILES=$(git diff --name-only origin/${{ github.base_ref }}..HEAD -- '*.py' | grep -v '^tests/' | tr '\n' ' ')
           echo "files=$FILES" >> $GITHUB_OUTPUT
 
       - name: Generate tests
-        if: steps.changed-files.outputs.files != ''
+        if: steps.coverage-check.outcome == 'failure' && steps.changed-files.outputs.files != ''
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python scripts/generate_tests.py ${{ steps.changed-files.outputs.files }}
 
       - name: Commit generated tests
+        if: steps.coverage-check.outcome == 'failure'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
