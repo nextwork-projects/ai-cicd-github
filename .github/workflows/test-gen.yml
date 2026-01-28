@@ -1,0 +1,59 @@
+name: AI Test Generation
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '**.py'
+      - '!tests/**'
+
+jobs:
+  generate-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Get changed Python files
+        id: changed-files
+        run: |
+          FILES=$(git diff --name-only origin/${{ github.base_ref }}..HEAD -- '*.py' | grep -v '^tests/' | tr '\n' ' ')
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+
+      - name: Generate tests
+        if: steps.changed-files.outputs.files != ''
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python scripts/generate_tests.py ${{ steps.changed-files.outputs.files }}
+
+      - name: Commit generated tests
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet tests/; then
+            echo "No new tests generated"
+            exit 0
+          fi
+
+          git add tests/
+          git commit -m "Auto-generate tests for new code [skip ci]"
+          git push
