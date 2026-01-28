@@ -50,19 +50,21 @@ jobs:
 
 
       - name: Get changed Python files
+        if: steps.coverage-check.outcome == 'failure'
         id: changed-files
         run: |
           FILES=$(git diff --name-only origin/${{ github.base_ref }}..HEAD -- '*.py' | grep -v '^tests/' | tr '\n' ' ')
           echo "files=$FILES" >> $GITHUB_OUTPUT
 
       - name: Generate tests
-        if: steps.changed-files.outputs.files != ''
+        if: steps.coverage-check.outcome == 'failure' && steps.changed-files.outputs.files != ''
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python scripts/generate_tests.py ${{ steps.changed-files.outputs.files }}
 
       - name: Commit generated tests
+        if: steps.coverage-check.outcome == 'failure'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
