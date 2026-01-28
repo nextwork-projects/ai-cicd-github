@@ -20,6 +20,9 @@ dev = [
     "build>=1.0.0",
 ]
 
+[tool.setuptools]
+py-modules = ["app", "more_utils"]
+
 [tool.ruff]
 line-length = 88
 target-version = "py39"
