@@ -121,7 +121,7 @@ def main():
 
         result = analyze_code(content, file_path)
 
-        time.delay(12)
+        time.sleep(12)
 
         if "error" in result:
             print(f"  Analysis error: {result['error']}")
@@ -131,7 +131,7 @@ def main():
             finding["file"] = file_path
             all_findings.append(finding)
 
-    markdown_report = format_findings_as_markdown(all_findings)
+    markdown_report = format_findings_markdown(all_findings)
     print("\n" + "=" * 50)
     print(markdown_report)
 
