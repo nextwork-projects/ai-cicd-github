@@ -52,7 +52,7 @@ def generate_tests_for_function(func_info):
 		"""
 
     response = client.models.generate_content(
-        model='gemini-3.0-flash',
+        model='gemini-2.5-flash',
         contents=prompt
     )
 
