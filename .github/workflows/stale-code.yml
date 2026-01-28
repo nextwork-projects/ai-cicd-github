@@ -35,12 +35,11 @@ jobs:
           python scripts/find_stale.py || true
 
       - name: Create GitHub Issue
-        if: hashFiles('stale_code_report.md') != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Check if report has findings (not just "No dead code detected")
-          if grep -q "issues found" stale_code_report.md; then
+          # Check if report exists and has findings
+          if [ -f stale_code_report.md ] && grep -q "issues found" stale_code_report.md; then
             gh issue create \
               --title "Weekly Stale Code Report - $(date +%Y-%m-%d)" \
               --body-file stale_code_report.md
