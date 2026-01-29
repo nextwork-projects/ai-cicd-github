@@ -1,0 +1,49 @@
+name: Stale Code Detector
+
+on:
+  # Run every Monday at 9:00 AM UTC
+  schedule:
+    - cron: '0 9 * * 1'
+  # Allow manual triggering for testing
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  detect-stale-code:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install google-genai
+
+      - name: Run stale code detector
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python scripts/find_stale.py || true
+
+      - name: Create GitHub Issue
+        if: hashFiles('stale_code_report.md') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if report has findings (not just "No dead code detected")
+          if grep -q "Found .* potential issues" stale_code_report.md; then
+            gh issue create \
+              --title "Weekly Stale Code Report - $(date +%Y-%m-%d)" \
+              --body-file stale_code_report.md
+          else
+            echo "No stale code findings to report"
+          fi
