@@ -32,13 +32,18 @@ def read_file_content(file_path: str) -> str:
 
 
 def analyze_code_with_gemini(code_content: str, file_path: str) -> dict:
-    """Send code to Gemini for dead code analysis."""
+    """Send code to Gemini for dead code analysis with time estimates."""
     prompt = f"""Analyze the following Python code and identify any dead code.
 
 Look for:
 1. Unused functions (defined but never called within this file)
 2. Dead imports (imported but never used)
 3. Unreachable code (code after return statements, etc.)
+
+For each finding, estimate the cleanup time using these guidelines:
+- **simple** (~2-5 min): Single line deletion, unused import, trivial function
+- **medium** (~10-15 min): Multiple related items, requires verification, modest refactoring
+- **complex** (~30+ min): Deeply coupled code, requires extensive testing, architectural changes
 
 File: {file_path}
 
@@ -54,7 +59,10 @@ Respond in JSON format with this structure:
             "type": "unused_function" | "dead_import" | "unreachable_code",
             "name": "name of the function/import/code",
             "line": line_number,
-            "description": "brief description of why this is dead code"
+            "description": "brief description of why this is dead code",
+            "estimated_minutes": number,
+            "complexity": "simple" | "medium" | "complex",
+            "reasoning": "explanation for the time estimate"
         }}
     ]
 }}
@@ -80,34 +88,52 @@ Only return the JSON, no additional text."""
 
 
 def format_findings_as_markdown(all_findings: list[dict]) -> str:
-    """Format all findings as markdown for a GitHub Issue."""
+    """Format all findings as markdown for a GitHub Issue with time estimates."""
     if not all_findings:
         return "## Stale Code Report\n\n✅ No dead code detected in this scan."
 
+    # Calculate total cleanup time
+    total_minutes = sum(f.get("estimated_minutes", 0) for f in all_findings)
+    total_hours = total_minutes / 60
+
     markdown = "## Stale Code Report\n\n"
-    markdown += f"Found **{len(all_findings)}** potential issues:\n\n"
+    markdown += f"Found **{len(all_findings)}** potential issues:\n"
+    markdown += f"**Estimated cleanup time:** {total_minutes} minutes (~{total_hours:.1f} hours)\n\n"
 
-    # Group findings by type
-    by_type = {}
+    # Group findings by complexity
+    by_complexity = {"simple": [], "medium": [], "complex": []}
     for finding in all_findings:
-        finding_type = finding.get("type", "unknown")
-        if finding_type not in by_type:
-            by_type[finding_type] = []
-        by_type[finding_type].append(finding)
+        complexity = finding.get("complexity", "unknown")
+        if complexity in by_complexity:
+            by_complexity[complexity].append(finding)
 
-    type_labels = {
-        "unused_function": "🔸 Unused Functions",
-        "dead_import": "📦 Dead Imports",
-        "unreachable_code": "⚠️ Unreachable Code"
+    complexity_labels = {
+        "simple": "🟢 Simple (2-5 min each)",
+        "medium": "🟡 Medium (10-15 min each)",
+        "complex": "🔴 Complex (30+ min each)"
     }
 
-    for finding_type, findings in by_type.items():
-        label = type_labels.get(finding_type, finding_type)
-        markdown += f"### {label}\n\n"
+    for complexity, findings in by_complexity.items():
+        if not findings:
+            continue
+        
+        label = complexity_labels.get(complexity, complexity)
+        complexity_total = sum(f.get("estimated_minutes", 0) for f in findings)
+        markdown += f"### {label} — {len(findings)} items ({complexity_total} min)\n\n"
+        
         for f in findings:
-            markdown += f"- **`{f.get('name', 'Unknown')}`** "
-            markdown += f"([{f.get('file', 'unknown')}:{f.get('line', '?')}])\n"
-            markdown += f"  - {f.get('description', 'No description')}\n\n"
+            type_emoji = {"unused_function": "🔸", "dead_import": "📦", "unreachable_code": "⚠️"}
+            emoji = type_emoji.get(f.get("type"), "•")
+            
+            markdown += f"{emoji} **`{f.get('name', 'Unknown')}`** "
+            markdown += f"({f.get('file', 'unknown')}:{f.get('line', '?')}) — "
+            markdown += f"~{f.get('estimated_minutes', '?')} min\n"
+            markdown += f"  - {f.get('description', 'No description')}\n"
+            
+            if f.get("reasoning"):
+                markdown += f"  - *Why:* {f.get('reasoning')}\n"
+            
+            markdown += "\n"
 
     return markdown
 
@@ -139,7 +165,8 @@ def main():
 
         findings_count = len(result.get("findings", []))
         if findings_count > 0:
-            print(f"  🔴 Found {findings_count} issue(s)")
+            total_time = sum(f.get("estimated_minutes", 0) for f in result.get("findings", []))
+            print(f"  🔴 Found {findings_count} issue(s) (~{total_time} min to fix)")
             for finding in result.get("findings", []):
                 finding["file"] = file_path
                 all_findings.append(finding)
