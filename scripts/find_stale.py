@@ -28,6 +28,7 @@ def read_file_content(file_path: str) -> str:
     except Exception as e:
         return f"Error reading file: {e}"
 
+
 def analyze_code(code_content: str, file_path: str) -> dict:
     """Send code to Gemini for dead code analysis."""
     prompt = f"""Analyze the following Python code and identify any dead code.
