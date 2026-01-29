@@ -13,7 +13,7 @@ class TestMath:
         assert add(-1, -1) == -2
 
     def test_multiply(self):
-        assert multiply(9, 9) == 
+        assert multiply(9, 9) == 81
         assert multiply(-1, -1) == 1
         assert multiply(-1, 1) == -1
 
