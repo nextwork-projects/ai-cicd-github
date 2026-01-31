@@ -20,7 +20,7 @@ def review_code(diff_text):
 
     # 2. Call the model (Gemini 2.0 Flash is great for speed/coding)
     response = client.models.generate_content(
-        model="gemini-2.5-flash", 
+        model="gemini-2.0-flash", 
         contents=prompt
     )
 
