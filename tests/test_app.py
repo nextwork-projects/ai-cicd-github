@@ -10,7 +10,7 @@ class TestMath:
         assert add(2, 3) == 5
     
     def test_multiply(self):
-        assert multiply(9, 9) == 18
+        assert multiply(9, 9) == 81
     
 
     def test_add_negative(self):
