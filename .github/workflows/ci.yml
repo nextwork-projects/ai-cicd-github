@@ -25,7 +25,7 @@ jobs:
       - name: Run tests
         run: pytest -v
 
-            - name: Build package
+      - name: Build package
         run: python -m build
 
       - name: Upload artifact
