@@ -29,17 +29,35 @@ For each issue found, provide:
 
 If the code looks good, say so.
 
+IMPORTANT: At the very end of your review, add a severity summary line in exactly this format:
+SEVERITY_SUMMARY: <level>
+Where <level> is one of: CRITICAL, WARNING, GOOD
+
+Use CRITICAL if any HIGH severity issues exist.
+Use WARNING if only MEDIUM or LOW severity issues exist.
+Use GOOD if no issues found.
+
 Code diff to review:
 
 {diff_text}
 
 
-Provide your review in a clear, structured format."""
+Provide your review in a clear, structured format, ending with the SEVERITY_SUMMARY line."""
 
     response = client.models.generate_content(
         model="gemini-2.5-flash", contents=prompt
     )
     return response.text
+
+def parse_severity(review_text):
+    """Extract severity level from the review output."""
+    for line in review_text.strip().split("\n"):
+        if line.strip().startswith("SEVERITY_SUMMARY:"):
+            level = line.split(":", 1)[1].strip().upper()
+            if level in ("CRITICAL", "WARNING", "GOOD"):
+                return level
+    return "WARNING"  # Default to WARNING if parsing fails
+
 
 if __name__ == "__main__":
     # Check if a filename was passed as a command-line argument
@@ -54,4 +72,8 @@ if __name__ == "__main__":
 
     # Call the review function and print the result
     review = review_code(diff_content)
+    severity = parse_severity(review)
     print(review)
+
+    with open("severity.txt", "w") as f:
+        f.write(severity)

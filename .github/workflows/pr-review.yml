@@ -39,6 +39,7 @@ jobs:
           echo "review<<EOF" >> $GITHUB_OUTPUT
           echo "$REVIEW" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+          echo "severity=$(cat severity.txt)" >> $GITHUB_OUTPUT
 
       - name: Post review comment
         uses: actions/github-script@v7
@@ -54,3 +55,46 @@ jobs:
               issue_number: context.issue.number,
               body: `## 🤖 AI Code Review\n\n${review}\n\n---\n*Powered by Gemini AI*`
             });
+
+      - name: Apply severity label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const severity = '${{ steps.ai-review.outputs.severity }}';
+
+            const labelMap = {
+              'CRITICAL': 'ai-review: critical',
+              'WARNING': 'ai-review: warning',
+              'GOOD': 'ai-review: looks-good'
+            };
+
+            const label = labelMap[severity] || labelMap['WARNING'];
+
+            // Remove any existing ai-review labels
+            const currentLabels = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            for (const existingLabel of currentLabels.data) {
+              if (existingLabel.name.startsWith('ai-review:')) {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  name: existingLabel.name
+                });
+              }
+            }
+
+            // Add the new severity label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: [label]
+            });
+
+            console.log(`Applied label: ${label}`);
+
