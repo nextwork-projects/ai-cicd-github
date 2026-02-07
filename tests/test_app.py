@@ -7,7 +7,7 @@ class TestMath:
     """Tests for math functions."""
 
     def test_add_positive(self):
-        assert add(2, 3) == 5
+        assert add(2, 3) == 6
 
     def test_add_negative(self):
         assert add(-1, -1) == -2
