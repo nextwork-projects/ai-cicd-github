@@ -14,15 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build package
-        run: python -m build
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-package
-          path: dist/
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -33,3 +24,25 @@ jobs:
 
       - name: Run tests
         run: pytest -v
+
+      - name: Build package
+        run: python -m build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+```
+
+**Key changes:**
+
+1. **Set up Python first** - You need Python installed before you can run any Python commands
+2. **Install dependencies** - This includes pytest and any build tools
+3. **Run tests** - Verify everything works before building
+4. **Build package** - Only build if tests pass
+5. **Upload artifact** - Upload the built package
+
+**Additional note:** You'll also need to make sure the `build` package is installed. Add it to your `requirements.txt`:
+```
+build
