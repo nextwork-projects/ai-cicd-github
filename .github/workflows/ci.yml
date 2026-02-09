@@ -1,4 +1,4 @@
-#CI Workflow for Python Project
+# CI Workflow for Python Project
 
 name: CI
 
@@ -26,13 +26,3 @@ jobs:
 
       - name: Run tests
         run: pytest -v
-
-      - name: Build package
-        run: python -m build
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-package
-          path: dist/
-
