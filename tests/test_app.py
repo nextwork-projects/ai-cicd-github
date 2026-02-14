@@ -1,6 +1,6 @@
 """Tests for app.py - you'll add more!"""
 
-from app import add, is_even, reverse_string
+from app import add, is_even, reverse_string, multiply
 
 
 class TestMath:
@@ -22,3 +22,11 @@ class TestStrings:
     def test_is_even(self):
         assert is_even(4) is True
         assert is_even(3) is False
+
+    
+class TestAdd:
+    def test_add_positive(self):
+        assert add(2, 3) == 5
+
+
+

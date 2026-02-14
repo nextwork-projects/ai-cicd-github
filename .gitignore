@@ -31,3 +31,5 @@ Thumbs.db
 
 # Ruff
 .ruff_cache/
+
+.ai_review.py
