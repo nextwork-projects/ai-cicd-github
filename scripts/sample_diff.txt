@@ -1,0 +1,17 @@
+diff --git a/app.py b/app.py
+index 1234567..abcdefg 100644
+--- a/app.py
++++ b/app.py
+@@ -1,5 +1,12 @@
+ """Simple utility functions"""
+
++import sqlite3
++
++def get_user(username):
++    conn = sqlite3.connect("users.db")
++    query = f"SELECT * FROM users WHERE name = '{username}'"
++    return conn.execute(query).fetchone()
++
+ def add(a: int, b: int) -> int:
+     """Add two numbers together."""
+     return a + b
