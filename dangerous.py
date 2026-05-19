@@ -1,3 +1,4 @@
+# Connectivity test: Get Actions with this profile.
 import subprocess
 
 def run_command(user_input):
